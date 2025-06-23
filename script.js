@@ -4,8 +4,17 @@
 // --- Game Settings ---
 const MAP_ROWS = 4;
 const MAP_COLS = 5;
-const START_FUNDING = 1000;
-const START_TIME = 150; // 5 minutes (150 days at 2s per day)
+// Default values for Normal
+let START_FUNDING = 1000;
+let START_TIME = 150;
+let FUNDING_INCOME = 100;
+let FUNDING_INTERVAL = 10000; // ms
+let RANDOM_EVENT_FREQ = 3; // turns between possible events
+let RANDOM_EVENT_CHANCE = 0.1; // 10%
+
+// Store difficulty
+let currentDifficulty = 'normal';
+
 const ACTIONS = [
   { key: 'well', name: 'Build Well', cost: 120, time: 3 },
   { key: 'rainwater', name: 'Install Rainwater Catchments', cost: 90, time: 2 },
@@ -41,6 +50,58 @@ const restartBtn = document.getElementById('restart-btn');
 const tilePopup = document.getElementById('tile-popup');
 const tilePopupContent = document.getElementById('tile-popup-content');
 const closeTilePopupBtn = document.getElementById('close-tile-popup');
+// Difficulty selector elements
+const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+const difficultyDesc = document.getElementById('difficulty-desc');
+
+// --- Difficulty Settings ---
+const DIFFICULTY_SETTINGS = {
+  normal: {
+    START_FUNDING: 1000,
+    START_TIME: 150,
+    FUNDING_INCOME: 100,
+    FUNDING_INTERVAL: 10000,
+    RANDOM_EVENT_FREQ: 3,
+    RANDOM_EVENT_CHANCE: 0.1,
+    desc: 'Normal: Balanced challenge.'
+  },
+  easy: {
+    START_FUNDING: 2000,
+    START_TIME: 200,
+    FUNDING_INCOME: 200,
+    FUNDING_INTERVAL: 10000,
+    RANDOM_EVENT_FREQ: 4, // less frequent
+    RANDOM_EVENT_CHANCE: 0.07, // less likely
+    desc: 'Easy: More time, more funds, less events.'
+  },
+  hard: {
+    START_FUNDING: 750,
+    START_TIME: 75,
+    FUNDING_INCOME: 75,
+    FUNDING_INTERVAL: 10000,
+    RANDOM_EVENT_FREQ: 2, // more frequent
+    RANDOM_EVENT_CHANCE: 0.18, // more likely
+    desc: 'Hard: Less time, less funds, more events.'
+  }
+};
+
+// --- Audio Elements ---
+const bgMusic = new Audio('sounds/music.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0.5; // Lower volume for background
+
+const victorySound = new Audio('sounds/victory.mp3');
+const popupSound = new Audio('sounds/popup.mp3');
+const achievementSound = new Audio('sounds/achievement.mp3');
+
+// Start background music when the page loads
+window.addEventListener('load', () => {
+  // Try to play music after user interaction (required by browsers)
+  document.body.addEventListener('click', startMusicOnce, { once: true });
+});
+function startMusicOnce() {
+  bgMusic.play();
+}
 
 // --- Helper Functions ---
 function randomRegionNeeds() {
@@ -80,6 +141,10 @@ function updateProgressBar() {
   const percent = enabledRegions.length === 0 ? 0 : Math.round((sustainedCount / enabledRegions.length) * 100);
   progressBar.style.width = `${percent}%`;
   progressPercent.textContent = `${percent}%`;
+  // Play achievement sound at 25%, 50%, 75%, 90%
+  if ([25, 50, 75, 90].includes(percent)) {
+    playSound('achievement');
+  }
   // Show win popup if 100% and not already shown
   if (percent === 100) {
     showWinPopup();
@@ -95,7 +160,17 @@ function showPopup(msg, duration = 2000) {
 }
 
 function playSound(type) {
-  // Placeholder for sound effects (students can add audio later)
+  // Play different sounds based on type
+  if (type === 'victory') {
+    victorySound.currentTime = 0;
+    victorySound.play();
+  } else if (type === 'popup') {
+    popupSound.currentTime = 0;
+    popupSound.play();
+  } else if (type === 'achievement') {
+    achievementSound.currentTime = 0;
+    achievementSound.play();
+  }
 }
 
 function getActionName(key) {
@@ -285,10 +360,10 @@ function nextTurn() {
 // Random event logic
 function triggerRandomEvent() {
   turnsSinceLastEvent++;
-  // Only allow an event every 3 turns at most
-  if (turnsSinceLastEvent < 3) return;
-  // 10% chance of an event every 3+ turns
-  if (Math.random() > 0.1) return;
+  // Only allow an event every RANDOM_EVENT_FREQ turns at most
+  if (turnsSinceLastEvent < RANDOM_EVENT_FREQ) return;
+  // RANDOM_EVENT_CHANCE chance of an event every RANDOM_EVENT_FREQ+ turns
+  if (Math.random() > RANDOM_EVENT_CHANCE) return;
   turnsSinceLastEvent = 0; // Reset counter if event happens
   // Define named events
   const events = [
@@ -335,6 +410,7 @@ function triggerRandomEvent() {
 
 // Modal popup for random events
 function showEventPopup(title, desc) {
+  playSound('popup');
   let eventPopup = document.getElementById('event-popup');
   if (!eventPopup) {
     eventPopup = document.createElement('div');
@@ -410,6 +486,8 @@ function resetGame() {
 
 // Add a win popup for 100% progress
 function showWinPopup() {
+  // Play victory sound
+  playSound('victory');
   // Create the popup if it doesn't exist
   let winPopup = document.getElementById('win-popup');
   if (!winPopup) {
@@ -514,6 +592,32 @@ ACTIONS.forEach(action => {
   }
 });
 
+// --- Difficulty Selector Logic ---
+difficultyBtns.forEach(btn => {
+  btn.addEventListener('click', function() {
+    // Remove selected from all, add to clicked
+    difficultyBtns.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const diff = btn.getAttribute('data-difficulty');
+    setDifficulty(diff);
+  });
+});
+
+function setDifficulty(diff) {
+  currentDifficulty = diff;
+  const settings = DIFFICULTY_SETTINGS[diff];
+  START_FUNDING = settings.START_FUNDING;
+  START_TIME = settings.START_TIME;
+  FUNDING_INCOME = settings.FUNDING_INCOME;
+  FUNDING_INTERVAL = settings.FUNDING_INTERVAL;
+  RANDOM_EVENT_FREQ = settings.RANDOM_EVENT_FREQ;
+  RANDOM_EVENT_CHANCE = settings.RANDOM_EVENT_CHANCE;
+  if (difficultyDesc) difficultyDesc.textContent = settings.desc;
+}
+
+// Set default difficulty desc
+if (difficultyDesc) difficultyDesc.textContent = DIFFICULTY_SETTINGS['normal'].desc;
+
 // Ensure all event listeners are set up after DOM is loaded
 window.onload = function() {
   // Hide game UI, show main menu
@@ -535,6 +639,7 @@ window.onload = function() {
   if (playBtn) {
     playBtn.onclick = function() {
       // Always reset all game state before starting
+      setDifficulty(currentDifficulty); // Use selected difficulty
       funding = START_FUNDING;
       timeLeft = START_TIME;
       sustainedCount = 0;
@@ -551,12 +656,12 @@ window.onload = function() {
       popup.style.display = 'none';
       if (fundingInterval) clearInterval(fundingInterval);
       if (eventTimeout) clearInterval(eventTimeout);
-      if (mainMenu) mainMenu.style.display = 'none';
-      if (progressContainer) progressContainer.style.display = '';
-      if (menuButtons) menuButtons.style.display = '';
-      if (sidebar) sidebar.style.display = '';
-      if (gameArea) gameArea.style.display = '';
-      if (resourceTracker) resourceTracker.style.display = '';
+      document.getElementById('main-menu').style.display = 'none';
+      document.getElementById('progress-container').style.display = '';
+      document.getElementById('menu-buttons').style.display = '';
+      document.getElementById('sidebar').style.display = '';
+      document.getElementById('game-area').style.display = '';
+      document.getElementById('resource-tracker').style.display = '';
       startGameLoop(); // Start the game loop and funding
     };
   }
@@ -578,53 +683,12 @@ function startGameLoop() {
     nextTurn();
   }, 2000); // 2 seconds per turn
 
-  // Give player $100 every 10 seconds
+  // Give player funding every interval based on difficulty
   if (fundingInterval) clearInterval(fundingInterval);
   fundingInterval = setInterval(() => {
-    funding += 100;
+    funding += FUNDING_INCOME;
     updateResourceTracker();
     // Optional: show a message when funding increases
-    // showPopup('Received $100 in funding!');
-  }, 10000); // 10 seconds
-}
-
-// Hide game UI at start, show main menu
-window.onload = function() {
-  document.getElementById('main-menu').style.display = 'flex';
-  document.getElementById('progress-container').style.display = 'none';
-  document.getElementById('menu-buttons').style.display = 'none';
-  document.getElementById('sidebar').style.display = 'none';
-  document.getElementById('game-area').style.display = 'none';
-  document.getElementById('resource-tracker').style.display = 'none';
-};
-
-// Start game when Play is clicked
-const playBtn = document.getElementById('play-btn');
-if (playBtn) {
-  playBtn.onclick = function() {
-    // Always reset all game state before starting
-    funding = START_FUNDING;
-    timeLeft = START_TIME;
-    sustainedCount = 0;
-    selectedAction = null;
-    selectedTile = null;
-    actionsTaken = 0;
-    regions = createRegions();
-    disableRandomHexes();
-    sustainedCount = regions.filter(region => !region.disabled && region.sustained).length;
-    updateResourceTracker();
-    updateProgressBar();
-    renderMap();
-    renderActions();
-    popup.style.display = 'none';
-    if (fundingInterval) clearInterval(fundingInterval);
-    if (eventTimeout) clearInterval(eventTimeout);
-    document.getElementById('main-menu').style.display = 'none';
-    document.getElementById('progress-container').style.display = '';
-    document.getElementById('menu-buttons').style.display = '';
-    document.getElementById('sidebar').style.display = '';
-    document.getElementById('game-area').style.display = '';
-    document.getElementById('resource-tracker').style.display = '';
-    startGameLoop(); // Start the game loop and funding
-  };
+    // showPopup(`Received $${FUNDING_INCOME} in funding!`);
+  }, FUNDING_INTERVAL);
 }

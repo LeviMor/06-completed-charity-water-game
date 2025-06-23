@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Georgia, serif;
   background: url('img/charitywatergamemap.png') no-repeat center center fixed;
   background-size: cover;
   color: #fff7e1;
@@ -430,4 +430,27 @@ body {
   height: 44px; /* At least 40px tall as per guidelines */
   width: auto;
   display: block;
+}
+.difficulty-btn {
+  margin-left: 8px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 5px;
+  background: #ffc907;
+  color: #1a1a1a;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: inherit;
+  font-size: 1em;
+}
+.difficulty-btn.selected,
+.difficulty-btn:focus {
+  background: #fff7e1;
+  color: #1a1a1a;
+  outline: 2px solid #ffc907;
+}
+.difficulty-btn:hover {
+  background: #fff7e1;
+  color: #1a1a1a;
 }
