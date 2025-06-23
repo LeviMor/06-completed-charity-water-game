@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Bringers - charity:water Game</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Main Menu (hidden by default after play) -->
+  <div id="main-menu">
+    <div class="menu-content">
+      <h1>Water Bringers</h1>
+      <p><b>charity:water's Mission:</b><br>
+        charity:water is a non-profit organization bringing clean and safe drinking water to people in developing countries.<br>
+        So in an effort to spread awareness for the good work they do, this game works to give you a window into some of the infrastructural challenges faced by charity:water.<br>
+        Learn more at <a href="https://www.charitywater.org/" target="_blank">charitywater.org</a>.
+      </p>
+      <p><b>Game Goal:</b><br>
+        Sustain all enabled regions by providing the water solutions they need before time runs out.
+      </p>
+      <p><b>How to Play:</b><br>
+        <ul>
+          <li>Select an action from the sidebar (such as Build Well or Install Rainwater Catchments).</li>
+          <li>Click a region (hex) to apply the selected action. Only needed actions can be applied to each region.</li>
+          <li>Each region has different needs. Complete all needs to sustain a region.</li>
+          <li>Some regions are randomly disabled each game for replayability.</li>
+          <li>You gain $100 in funding every 10 days. Use funding to perform actions.</li>
+          <li>Complete all enabled regions before time runs out!</li>
+        </ul>
+      </p>
+      <button id="play-btn">Play</button>
+    </div>
+  </div>
+
+  <!-- Progress Bar (top left) -->
+  <div id="progress-container">
+    <div id="progress-label">Progress</div>
+    <div id="progress-bar-bg">
+      <div id="progress-bar"></div>
+    </div>
+    <div id="progress-percent">0%</div>
+  </div>
+
+  <!-- Menu Buttons (top right) -->
+  <div id="menu-buttons">
+  </div>
+
+  <!-- Charity:water Logo (top right, per brand guidelines) -->
+  <a id="cw-logo-link" href="https://www.charitywater.org/" target="_blank" aria-label="charity:water website">
+    <img id="cw-logo" src="img/cw_logo_horizontal.png" alt="charity:water logo" />
+  </a>
+
+  <!-- Sidebar (left) -->
+  <div id="sidebar">
+    <h2>Actions</h2>
+    <ul id="action-list">
+      <li data-action="well">Build Well</li>
+      <li data-action="rainwater">Install Rainwater Catchments</li>
+      <li data-action="gravity">Implement Gravity Fed Systems</li>
+      <li data-action="piped">Build Piped Systems</li>
+      <li data-action="purification">Install Water Purification Systems</li>
+      <li data-action="biosand">Provide BioSand Filters</li>
+      <li data-action="spring">Construct Spring Protections</li>
+      <li data-action="latrines">Build Latrines</li>
+    </ul>
+  </div>
+
+  <!-- Main Game Area (center) -->
+  <div id="game-area">
+    <div id="map-grid"></div>
+    <div id="popup-message" style="display:none;"></div>
+    <div id="tile-popup" style="display:none;" class="tile-popup-modal">
+      <div id="tile-popup-content"></div>
+      <button id="close-tile-popup">Close</button>
+    </div>
+  </div>
+
+  <!-- Resource Tracker (bottom center) -->
+  <div id="resource-tracker">
+    <span>Funding: $<span id="funding">0</span></span>
+    <span>Time: <span id="time">0</span></span>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
